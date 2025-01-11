@@ -23,7 +23,7 @@ if (NOT jsoncpp_FOUND)
 endif()
 
 # Создаем исполняемый файл
-add_executable(ScreenTime ScreenTime.cpp ScreenTime.h)
+add_executable(ScreenTime ScreenTime.cpp)
 
 # Линкуем библиотеку jsoncpp к проекту
 target_link_libraries(ScreenTime PRIVATE JsonCpp::JsonCpp)  # Используйте правильное имя библиотеки!
