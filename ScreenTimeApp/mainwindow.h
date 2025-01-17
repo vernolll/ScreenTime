@@ -2,6 +2,9 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include "backend.h"
+
+class backend;
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -19,5 +22,7 @@ public:
 
 private:
     Ui::MainWindow *ui;
+    backend back;
+
 };
 #endif // MAINWINDOW_H

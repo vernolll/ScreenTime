@@ -3,3 +3,4 @@ build
 vcpkg_installed
 CMakeUserPresets.json
 out
+screen_time.json

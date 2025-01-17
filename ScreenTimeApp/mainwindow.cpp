@@ -7,6 +7,7 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     showMaximized();
+    back.get_info();
 }
 
 MainWindow::~MainWindow()
