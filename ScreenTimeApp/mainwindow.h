@@ -1,28 +1,43 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
+#include <QDialog>
+#include <QPushButton>
+#include <QLabel>
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QString>
 
-#include <QMainWindow>
+#include <QtCharts/QChartView>
+#include <QtCharts/QBarSeries>
+#include <QtCharts/QBarSet>
+#include <QtCharts/QBarCategoryAxis>
+#include <QtCharts/QValueAxis>
 #include "backend.h"
 
 class backend;
 
-QT_BEGIN_NAMESPACE
-namespace Ui {
-class MainWindow;
-}
-QT_END_NAMESPACE
-
-class MainWindow : public QMainWindow
+class MainWindow : public QDialog
 {
     Q_OBJECT
 
 public:
-    MainWindow(QWidget *parent = nullptr);
+    explicit MainWindow(QWidget* parent);
     ~MainWindow();
 
 private:
-    Ui::MainWindow *ui;
+    QLabel* label1;
+    QLabel* label2;
+
+    QPushButton* btnOk;
+    QPushButton* btnCancel;
+
+    QBarSet* set;
+    QChart* chart;
+
+    QBarSeries* series;
     backend back;
+
+    void setupUi();
 
 };
 #endif // MAINWINDOW_H

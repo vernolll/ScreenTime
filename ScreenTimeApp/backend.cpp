@@ -6,20 +6,26 @@
 #include <QJsonValue>
 #include <QDebug>
 
-backend::backend() {}
+backend::backend() 
+{
+    get_info();
+}
 
-void backend::get_info() {
-    QString filePath = "../../../screen_time.json";
+QMap<QDate, QMap<QString, int>> backend::get_info() {
+    QMap<QDate, QMap<QString, int>> result;
+
+    QString filePath = "../../screen_time.json";
+    qDebug() << "Current working directory:" << QDir::currentPath();
 
     QFile file(filePath);
     if (!file.exists()) {
         qDebug() << "File does not exist at:" << filePath;
-        return;
+        return result;
     }
 
     if (!file.open(QIODevice::ReadOnly)) {
         qDebug() << "Failed to open JSON file at:" << filePath;
-        return;
+        return result;
     }
 
     QByteArray data = file.readAll();
@@ -28,7 +34,7 @@ void backend::get_info() {
     QJsonDocument jsonDoc = QJsonDocument::fromJson(data);
     if (jsonDoc.isNull() || !jsonDoc.isObject()) {
         qDebug() << "Failed to parse JSON file.";
-        return;
+        return result;
     }
 
     QJsonObject jsonObj = jsonDoc.object();
@@ -38,6 +44,10 @@ void backend::get_info() {
         if (dateStr == "Date") continue;
 
         QDate date = QDate::fromString(dateStr, "dd-MM-yyyy");
+        if (!date.isValid()) {
+            qDebug() << "Invalid date format in JSON key:" << dateStr;
+            continue;
+        }
 
         QJsonValue value = it.value();
         if (value.isObject()) {
@@ -50,15 +60,9 @@ void backend::get_info() {
                 appUsage.insert(appName, timeSpent);
             }
 
-            this->data[date] = appUsage;
+            result[date] = appUsage;
         }
     }
 
-    for (auto dateIt = this->data.begin(); dateIt != this->data.end(); ++dateIt) {
-        qDebug() << "Date:" << dateIt.key().toString("dd-MM-yyyy");
-        QMap<QString, int> appUsage = dateIt.value();
-        for (auto appIt = appUsage.begin(); appIt != appUsage.end(); ++appIt) {
-            qDebug() << "  App:" << appIt.key() << ", Time:" << appIt.value();
-        }
-    }
+    return result;
 }

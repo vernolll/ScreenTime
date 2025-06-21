@@ -8,13 +8,6 @@
 ScreenTimeAPI::ScreenTimeAPI(const std::string& filename)
     : outputFilename(filename), lastApp("Unknown"),
     lastSwitchTime(std::chrono::steady_clock::now()) {
-
-    std::string currentDir = std::filesystem::current_path().string();
-    
-    if (currentDir.find("build") != std::string::npos) {
-        // Например, поднимаемся на уровень выше, если программа запущена из папки сборки
-        outputFilename = "../" + filename; // Поднимаемся в корень проекта
-    }
 }
 
 // Функция для получения имени активного приложения

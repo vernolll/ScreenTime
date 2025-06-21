@@ -12,8 +12,7 @@ class backend : public QObject
     Q_OBJECT
 public:
     backend();
-    void get_info();
-    QHash <QDate, QMap<QString, int>> data;
+    QMap<QDate, QMap<QString, int>> get_info();
 };
 
 #endif // BACKEND_H

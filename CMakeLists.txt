@@ -9,11 +9,6 @@ endif()
 # Указываем имя проекта
 project("ScreenTime")
 
-set(CMAKE_PREFIX_PATH "D:/vcpkg/installed/x64-windows/share" ${CMAKE_PREFIX_PATH})
-
-# Указываем путь к файлу vcpkg.cmake
-set(CMAKE_TOOLCHAIN_FILE "D:/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE STRING "Vcpkg toolchain file")
-
 # Ищем библиотеку jsoncpp, установленную через vcpkg
 find_package(jsoncpp CONFIG REQUIRED)
 
