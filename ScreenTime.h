@@ -11,7 +11,8 @@
 #include <psapi.h>
 #endif
 
-class ScreenTimeAPI {
+class ScreenTimeAPI 
+{
 public:
     ScreenTimeAPI(const std::string& filename);
     void trackScreenTime();
@@ -21,10 +22,10 @@ private:
     std::string getCurrentDayMonthYear();
     void writeToJson();
 
-    std::string outputFilename; // Имя файла для записи
-    std::unordered_map<std::string, int> appTimes; // Хранит экранное время приложений
-    std::string lastApp; // Последнее активное приложение
-    std::chrono::steady_clock::time_point lastSwitchTime; // Время последнего переключения
+    std::string outputFilename;
+    std::unordered_map<std::string, int> appTimes;
+    std::string lastApp;
+    std::chrono::steady_clock::time_point lastSwitchTime; 
 };
 
-#endif // SCREENTIMEAPI_H
+#endif

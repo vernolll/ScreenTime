@@ -6,6 +6,7 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QString>
+#include <QApplication>
 
 #include <QtCharts/QChartView>
 #include <QtCharts/QBarSeries>
@@ -28,16 +29,22 @@ private:
     QLabel* label1;
     QLabel* label2;
 
-    QPushButton* btnOk;
-    QPushButton* btnCancel;
+    QPushButton* btnDay;
+    QPushButton* btnWeek;
+    QMap<QDate, QMap<QString, int>> data;
 
+    QChartView* chartView;
     QBarSet* set;
+    QBarSeries* series;
+    QBarCategoryAxis* axisX;
+    QValueAxis* axisY;
     QChart* chart;
 
-    QBarSeries* series;
     backend back;
 
     void setupUi();
-
+    void showDayChart();
+    void showWeekChart();
+    void updateChart(const QMap<QString, int>& usage, const QString& labelText);
 };
 #endif // MAINWINDOW_H

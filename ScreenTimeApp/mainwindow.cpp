@@ -13,10 +13,11 @@ MainWindow::~MainWindow()
 void MainWindow::setupUi()
 {
     backend back;
-    QMap<QDate, QMap<QString, int>> data = back.get_info();
+    data = back.get_info();
 
     setWindowTitle("Screen time");
-    setFixedSize(360, 480);  // Айфон-подобный размер окна (пример)
+    this->resize(QApplication::primaryScreen()->availableGeometry().size());
+    this->move(0, 0);
 
     this->setStyleSheet("background-color: #FAFAFA; color: #333333; font-family: 'SF Pro Text', 'Segoe UI', Arial;");
 
@@ -42,11 +43,13 @@ void MainWindow::setupUi()
         }
     )";
 
-    btnOk = new QPushButton("OK");
-    btnOk->setStyleSheet(btnStyle);
+    btnDay = new QPushButton("Day");
+    btnWeek = new QPushButton("Week");
+    btnDay->setStyleSheet(btnStyle);
+    btnWeek->setStyleSheet(btnStyle);
 
-    btnCancel = new QPushButton("Cancel");
-    btnCancel->setStyleSheet(btnStyle);
+    connect(btnDay, &QPushButton::clicked, this, &MainWindow::showDayChart);
+    connect(btnWeek, &QPushButton::clicked, this, &MainWindow::showWeekChart);
 
     set = new QBarSet("");
     series = new QBarSeries();
@@ -58,55 +61,21 @@ void MainWindow::setupUi()
     chart->setAnimationOptions(QChart::SeriesAnimations);
     chart->setBackgroundVisible(false);
 
-    QStringList categories;
-    QBarCategoryAxis* axisX = new QBarCategoryAxis();
-    QValueAxis* axisY = new QValueAxis();
+    axisX = new QBarCategoryAxis();
+    axisY = new QValueAxis();
 
     axisY->setRange(0, 70);
     axisY->setTickCount(6);
     axisY->setLabelFormat("%d min");
     axisY->setGridLineColor(QColor("#EEEEEE"));
     axisY->setLabelsColor(QColor("#999999"));
+
     chart->addAxis(axisY, Qt::AlignLeft);
     series->attachAxis(axisY);
 
-    // Получаем сегодня и данные за сегодня
-    QDate today = QDate::currentDate();
-    int totalUsage = 0;
-
-    if (data.contains(today)) {
-        QMap<QString, int> todayData = data[today];
-
-        for (auto it = todayData.begin(); it != todayData.end(); ++it) {
-            categories.append(it.key());
-            *set << it.value();
-            totalUsage += it.value();
-        }
-    }
-
-    // Если нет данных за сегодня, для красоты ставим пустые категории
-    if (categories.isEmpty()) {
-        categories << "No data";
-        *set << 0;
-    }
-
-    axisX->append(categories);
-    axisX->setGridLineVisible(false);
-    axisX->setLabelsColor(QColor("#999999"));
-    chart->addAxis(axisX, Qt::AlignBottom);
-    series->attachAxis(axisX);
-
-    series->setLabelsVisible(true);
-    series->setLabelsPosition(QAbstractBarSeries::LabelsInsideEnd);
-    series->setLabelsFormat("%.0f min");
-
-    QChartView* chartView = new QChartView(chart);
+    chartView = new QChartView(chart);
     chartView->setRenderHint(QPainter::Antialiasing);
     chartView->setStyleSheet("background: transparent;");
-
-    label1->setText(QString("Total usage time: %1 min").arg(totalUsage));
-    label1->setStyleSheet("font-size: 20px; font-weight: 600; padding: 10px 0;");
-    label1->setAlignment(Qt::AlignCenter);
 
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(24, 20, 24, 20);
@@ -114,17 +83,166 @@ void MainWindow::setupUi()
 
     mainLayout->addWidget(label1);
     mainLayout->addWidget(label2);
+
+    QHBoxLayout* modeLayout = new QHBoxLayout();
+    modeLayout->addStretch();
+    modeLayout->addWidget(btnDay);
+    modeLayout->addWidget(btnWeek);
+    modeLayout->addStretch();
+
+    mainLayout->addLayout(modeLayout);
     mainLayout->addWidget(chartView, 1);
 
     QHBoxLayout* buttonLayout = new QHBoxLayout();
     buttonLayout->setSpacing(16);
     buttonLayout->addStretch();
-    buttonLayout->addWidget(btnCancel);
-    buttonLayout->addWidget(btnOk);
     buttonLayout->addStretch();
 
     mainLayout->addLayout(buttonLayout);
 
-    connect(btnOk, &QPushButton::clicked, this, &QDialog::accept);
-    connect(btnCancel, &QPushButton::clicked, this, &QDialog::reject);
+    showDayChart();
+}
+
+
+void MainWindow::showWeekChart()
+{
+    chart->removeAllSeries();
+    if (axisX) 
+    {
+        chart->removeAxis(axisX);
+        delete axisX;
+    }
+    axisX = new QBarCategoryAxis();
+
+    QDate today = QDate::currentDate();
+    QList<QDate> last7Days;
+    for (int i = 6; i >= 0; --i)
+        last7Days.append(today.addDays(-i));
+
+    QSet<QString> allApps;
+    for (const QDate& day : last7Days)
+    {
+        if (data.contains(day))
+        {
+            QSet<QString> keysSet;
+            for (const QString& key : data[day].keys())
+                keysSet.insert(key);
+            allApps.unite(keysSet);
+        }
+    }
+
+    QBarSeries* weekSeries = new QBarSeries();
+    QMap<QString, QBarSet*> appBarSets;
+    for (const QString& app : allApps)
+    {
+        QBarSet* barSet = new QBarSet(app);
+        appBarSets[app] = barSet;
+        weekSeries->append(barSet);
+    }
+
+    for (const QDate& day : last7Days)
+    {
+        for (const QString& app : allApps) 
+        {
+            int usage = data.value(day).value(app, 0);
+            appBarSets[app]->append(usage);
+        }
+    }
+
+    QStringList categories;
+    for (const QDate& day : last7Days)
+    {
+        categories << QLocale().dayName(day.dayOfWeek(), QLocale::ShortFormat);
+    }
+
+    axisX->append(categories);
+    axisX->setLabelsColor(QColor("#999999"));
+
+    chart->addSeries(weekSeries);
+    chart->setAxisX(axisX, weekSeries);
+    chart->setAxisY(axisY, weekSeries);
+
+    chart->legend()->setVisible(true);
+    chart->legend()->setAlignment(Qt::AlignBottom);
+    label2->setText("Last 7 days");
+
+    int total = 0;
+    for (const QString& app : allApps)
+    {
+        for (const QDate& day : last7Days) 
+        {
+            total += data.value(day).value(app, 0);
+        }
+    }
+    label1->setText(QString("Total usage time: %1 min").arg(total));
+}
+
+void MainWindow::showDayChart()
+{
+    chart->removeAllSeries();
+    chart->removeAxis(axisX);
+    axisX = new QBarCategoryAxis();
+
+    QDate today = QDate::currentDate();
+    QMap<QString, int> todayData = data.value(today);
+
+    QBarSet* daySet = new QBarSet("");
+    QStringList categories;
+    int total = 0;
+    for (auto it = todayData.begin(); it != todayData.end(); ++it)
+    {
+        categories << it.key();
+        daySet->append(it.value());
+        total += it.value();
+    }
+    if (categories.isEmpty())
+    {
+        categories << "No data";
+        daySet->append(0);
+    }
+
+    QBarSeries* daySeries = new QBarSeries();
+    daySeries->append(daySet);
+
+    axisX->append(categories);
+    axisX->setLabelsColor(QColor("#999999"));
+
+    chart->addSeries(daySeries);
+    chart->setAxisX(axisX, daySeries);
+    chart->setAxisY(axisY, daySeries);
+
+    chart->legend()->setVisible(false);
+
+    label1->setText(QString("Total usage time: %1 min").arg(total));
+    label2->setText("Today");
+}
+
+void MainWindow::updateChart(const QMap<QString, int>& usage, const QString& labelText)
+{
+    set->remove(0, set->count());
+    axisX->clear();             
+
+    QStringList categories;
+    int total = 0;
+
+    for (auto it = usage.begin(); it != usage.end(); ++it) 
+    {
+        categories << it.key();
+        *set << it.value();
+        total += it.value();
+    }
+
+    if (categories.isEmpty()) 
+    {
+        categories << "No data";
+        *set << 0;
+    }
+
+    axisX->append(categories);
+    axisX->setLabelsColor(QColor("#999999"));
+    chart->addAxis(axisX, Qt::AlignBottom);
+    series->attachAxis(axisX);
+
+    label1->setText(QString("Total usage time: %1 min").arg(total));
+    label2->setText(labelText);
 }
